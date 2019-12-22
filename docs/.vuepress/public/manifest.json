@@ -1,0 +1,16 @@
+{
+  "name": "Vm Blog",
+  "short_name": "Vm Blog",
+  "description": "A personal blog by Vm",
+  "icons": [
+    {
+      "src": "/icons/avatar.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
