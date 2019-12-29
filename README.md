@@ -1,4 +1,4 @@
-# LeetCode-Viewer
+# [LeetCode-Viewer](https://github.com/shushu1234/LeetCode-Viewer)
 
 ## 简介：
 
@@ -6,7 +6,7 @@ LeetCode-Viewer是一个利用Python爬取LeetCode-CN的做题信息，并通过
 
 下面给先看一下吧：
 
-![LeetCode-Viewer](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/LeetCode-Viwer.gif)
+![](https://raw.githubusercontent.com/shushu1234/images/master/img/LeetCode-Viewer.gif)
 
 ## 使用方式
 
@@ -47,39 +47,39 @@ fork该工程，然后clone到本地，由于本项目需要vuepress和python相
 
 1. 自动爬取LeetCode通过的所有题目。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/all.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/all.jpg)
 
 2. 对每一道题目可以爬取 **英文原文**，**中文翻译**，**通过代码**，**统计信息**，**提交历史**，**相似题目**。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/preview.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/preview.jpg)
 
 3. 提交代码中可以展示所有的通过的代码，支持**多种语言同时展示**，可以**折叠代码展示区**。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/code.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/code.jpg)
 
 4. 统计信息展示该题的**通过次数**，**提交次数**，**AC比率**。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/summary.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/summary.jpg)
 
 5. 提交历史展示该题的所有的**提交时间**，**提交结果**，**执行时间**，**内存消耗**，**语言**，同时可以点击提交结果自动对应的提交详情页。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/history.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/history.jpg)
 
 6. 相似题目将自动获取与该题**类似的题目**及其**难度**（如果该题存在相似题目的话），可以点击题目直达该题。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/same.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/same.jpg)
 
 7. 分类将根据题目的难度分为**简单**，**中等**，**困难**。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/category.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/category.jpg)
 
 8. 标签页将对题目按照对应的标签自动分类。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/tags.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/tags.jpg)
 
 9. 时间轴将根据做题的时间自动排列出来。
 
-   ![](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/timeline.jpg)
+   ![](https://raw.githubusercontent.com/shushu1234/images/master/img/timeline.jpg)
 
 ## 爬取规则
 
