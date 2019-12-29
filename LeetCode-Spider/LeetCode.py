@@ -331,7 +331,7 @@ def get_all_problems(client):
 
     with open("code_template.json", "r") as f:  # 读取记录
         local_problems_code_template = json.loads(f.read())
-    problem_anchor=""
+    problem_anchor = ""
     try:
         for question in question_list['stat_status_pairs']:
 
@@ -353,7 +353,8 @@ def get_all_problems(client):
                 question_frontend_id = question['stat']['frontend_question_id']
                 print(frontend_question_id)
                 submission_list = get_submissions_slug(client, question_slug)
-                problem_anchor=question_slug
+                problem_anchor = question_slug
+                is_need_write = False
                 if len(submission_list) > 0:
                     code_str = "<RecoDemo>\n"
                     if local_problems_code_template.__contains__(question_slug):
@@ -361,34 +362,44 @@ def get_all_problems(client):
                         for i in range(len(this_problem_code_template)):
                             code_str += this_problem_code_template[i]
                     for i in range(len(submission_list)):
-                        if (not local_problems.__contains__(question_slug) and submission_list[i]['statusDisplay'] == 'Accepted') or (local_problems.__contains__(question_slug) and not local_problems[question_slug].__contains__(submission_list[i]['timestamp']) and submission_list[i]['statusDisplay'] == 'Accepted'):
+                        if (not local_problems.__contains__(question_slug) and submission_list[i][
+                            'statusDisplay'] == 'Accepted') or (
+                                local_problems.__contains__(question_slug) and not local_problems[
+                            question_slug].__contains__(submission_list[i]['timestamp']) and submission_list[i][
+                                    'statusDisplay'] == 'Accepted'):
                             time.sleep(1)
-                            temp = get_submission_by_id(client,submission_list[i]['id'])
-                            this_submission_code_str = '  <template slot="code-'+temp['lang'].title()+'-'+str(i+1)+'">\n'
-                            filepath = OUTPUT_DIR + '/codes/'+question_slug+'-'+str(i+1)+'.'+temp['lang']
-                            print(question_slug+'-'+str(i+1)+'.'+temp['lang'])
+                            temp = get_submission_by_id(client, submission_list[i]['id'])
+                            this_submission_code_str = '  <template slot="code-' + temp['lang'].title() + '-' + str(
+                                i + 1) + '">\n'
+                            filepath = OUTPUT_DIR + '/codes/' + question_slug + '-' + str(i + 1) + '.' + temp['lang']
+                            print(question_slug + '-' + str(i + 1) + '.' + temp['lang'])
                             with open(filepath, "w") as f:
                                 f.write(temp['code'])
-                            this_submission_code_str += '    <<< @/docs/views/codes/'+question_slug+'-'+str(i+1)+'.'+temp['lang']+'?'+temp['lang'].title()+'\n'
+                            this_submission_code_str += '    <<< @/docs/views/codes/' + question_slug + '-' + str(
+                                i + 1) + '.' + temp['lang'] + '?' + temp['lang'].title() + '\n'
                             this_submission_code_str += '  </template>\n'
                             if not local_problems.__contains__(question_slug):
-                                local_problems[question_slug]=submission_list[i]['timestamp']
-                                local_problems_code_template[question_slug]=this_submission_code_str
+                                local_problems[question_slug] = submission_list[i]['timestamp']
+                                local_problems_code_template[question_slug] = this_submission_code_str
+                                is_need_write = True
                             if not local_problems[question_slug].__contains__(submission_list[i]['timestamp']):
-                                this_problem_local_timestamp=local_problems[question_slug]
-                                this_problem_local_timestamp+=','+submission_list[i]['timestamp']
-                                local_problems[question_slug]=this_problem_local_timestamp
+                                this_problem_local_timestamp = local_problems[question_slug]
+                                this_problem_local_timestamp += ',' + submission_list[i]['timestamp']
+                                local_problems[question_slug] = this_problem_local_timestamp
 
-                                this_problem_local_template=local_problems_code_template[question_slug]
-                                this_problem_local_template+=','+this_submission_code_str
-                                local_problems_code_template[question_slug]=this_problem_local_template
+                                this_problem_local_template = local_problems_code_template[question_slug]
+                                this_problem_local_template += ',' + this_submission_code_str
+                                local_problems_code_template[question_slug] = this_problem_local_template
+                                is_need_write = True
 
-                            code_str+=this_submission_code_str
+                            code_str += this_submission_code_str
                     code_str += '</RecoDemo>\n'
                     submission_list[0]['title'] = question_title
                     submission_list[0]['code_str'] = code_str
-                    submission_list[0]['problem_slug']=problem_anchor
-                    write_to_file(client, submission_list[0])
+                    submission_list[0]['problem_slug'] = problem_anchor
+
+                    if is_need_write:
+                        write_to_file(client, submission_list[0])
     finally:
         try:
             local_problems.pop(problem_anchor)
@@ -398,7 +409,6 @@ def get_all_problems(client):
                 f.write(json.dumps(local_problems))
             with open("code_template.json", "w") as f:
                 f.write(json.dumps(local_problems_code_template))
-
 
 def mkdir(path):
     folder = os.path.exists(path)

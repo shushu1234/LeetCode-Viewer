@@ -3,16 +3,17 @@
   "title": "LeetCode-Viewer",
   "author": "LiuYao",
   "version": "1.0.0",
-  "homepage": "http://blog.danran.site",
+  "homepage": "https://www.liuyao.site",
   "repository": {
     "type": "git",
-    "url": "https://github.com/danranVm/blog"
+    "url": "https://github.com/shushu1234/LeetCode-Viewer"
   },
-  "bugs": "https://github.com/danranVm/blog/issues",
+  "bugs": "https://github.com/shushu1234/LeetCode-Viewer/issues",
   "description": "",
   "scripts": {
     "dev": "vuepress dev docs",
-    "build": "vuepress build docs"
+    "build": "vuepress build docs",
+    "docs:build": "vuepress build docs"
   },
   "dependencies": {
     "vuepress": "^1.2.0",
