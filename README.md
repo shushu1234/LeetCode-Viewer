@@ -87,7 +87,7 @@ fork该工程，然后clone到本地，由于本项目需要vuepress和python相
 
 如果想让某道题重新爬取的话，可以修改工程中的`problem.json`
 
-![problem.json](https://images-1253421044.cos.ap-beijing.myqcloud.com/leetcode-viewer/problem-json.jpg)
+![problem.json](https://raw.githubusercontent.com/shushu1234/images/master/img/problem-json.jpg)
 
 如果想重新爬取该题目的话，删掉整行即可，如果要重新某次提交的话，删掉对应提交的时间戳即可。
 
