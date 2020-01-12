@@ -14,6 +14,15 @@ module.exports = {
     ['meta', { name: 'msapplication-TileImage', content: '/icons/msapplication-icon-144x144.png' }],
     ['meta', { name: 'msapplication-TileColor', content: '#000000' }],
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1,user-scalable=no' }],
+    ['script', {}, `
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e1f25328cf94c1e4e1cb0a1940c81ba1";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+`]
   ],
 
   theme: 'reco',
@@ -99,8 +108,20 @@ module.exports = {
     lineNumbers: true,
   },
   plugins: [
-      ['@vuepress-reco/extract-code'],
-    ['@vuepress/medium-zoom', true],
+      'latex',
+      [
+      'vuepress-plugin-medium-zoom',
+      {
+        selector: '.theme-reco-content :not(a) > img',
+        delay: 1000,
+        options: {
+          margin: 24,
+          background: '#182529',
+          scrollOffset: 0,
+        },
+      },
+    ],
+    ['@vuepress-reco/extract-code'],
     [
       '@vuepress/pwa',
       {
@@ -111,7 +132,7 @@ module.exports = {
     [
       '@vuepress/google-analytics',
       {
-        ga: 'UA-125817360-1',
+        ga: '',
       },
     ],
   ],

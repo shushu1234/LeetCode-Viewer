@@ -6,12 +6,11 @@
 """
 import os
 import time
+import re
 import requests
 import json
 from lxml import etree
 
-
-# ~~~~~~~~~~~~以下是无需修改的参数~~~~~~~~~~~~~~~~·
 requests.packages.urllib3.disable_warnings()  # 为了避免弹出一万个warning，which is caused by 非验证的get请求
 
 leetcode_url = 'https://leetcode-cn.com/'
@@ -26,13 +25,12 @@ with open("config.json", "r") as f:  # 读取用户名，密码，本地存储�
     USERNAME = temp['username']
     PASSWORD = temp['password']
     OUTPUT_DIR = temp['outputDir']
-# ~~~~~~~~~~~~以上是无需修改的参数~~~~~~~~~~~~~~~~·
 
-# ~~~~~~~~~~~~以下是可以修改的参数~~~~~~~~~~~~~~~~·
-START_PAGE = 0  # 从哪一页submission开始爬起，0是最新的一页
-sleep_time = 5  # in second，登录失败时的休眠时间
 
-# ~~~~~~~~~~~~以上是可以修改的参数~~~~~~~~~~~~~~~~·
+file_suffix = {"cpp": "cpp", "python3": "py", "python": "py", "mysql": "sql", "golang": "go", "java": "java",
+               "c": "c", "javascript": "js", "php": "php", "csharp": "cs", "ruby": "rb", "swift": "swift",
+               "scala": "scl", "kotlin": "kt", "rust": "rs"}
+
 
 session = requests.Session()
 user_agent = r'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'
@@ -57,10 +55,9 @@ def login(email, password):  # 本函数copy自https://gist.github.com/fyears/48
                 break
         except:
             print("登录失败，请稍后再试...")
-            time.sleep(sleep_time)
+            time.sleep(5*1000)
 
     return client
-
 
 def write_to_file(client, submission):
     Lang = submission['lang']
@@ -138,6 +135,21 @@ def write_to_file(client, submission):
         # f.writelines("```" + Lang + "\n")
         f.write(submission_code)
         # f.writelines("\n```\n")
+
+        f.writelines("\n\n")
+        solution_detail = get_solution_detail_by_node(problem_slug, get_solutions_by_slug(problem_slug,"DEFAULT"))
+        if solution_detail['author']['username'] != 'LeetCode':
+            solution_detail = get_solution_detail_by_node(problem_slug, get_solutions_by_slug(problem_slug, "MOST_UPVOTE"))
+        solution_content = solution_detail['content']
+        image_dict = download_image(problem_slug, solution_content)
+        for key in image_dict:
+            solution_content = solution_content.replace(key, image_dict[key])
+        if solution_detail['author']['username'] == 'LeetCode':
+            f.writelines("## 官方题解\n")
+        else:
+            f.writelines("## 高赞题解\n")
+        # f.writelines("```" + Lang + "\n")
+        f.write(solution_content)
 
         f.writelines("\n\n")
         f.writelines("## 统计信息\n")
@@ -301,6 +313,182 @@ def get_problem_by_slug(slug):
     return question
 
 
+def get_solutions_by_slug(slug,sortMethod):
+    url = "https://leetcode-cn.com/graphql"
+    params = {'operationName': "questionSolutionArticles",
+              'variables': {'questionSlug': slug, 'first': 10, 'skip': 0, 'orderBy': sortMethod},
+              'query': '''query questionSolutionArticles($questionSlug: String!, $skip: Int, $first: Int, $orderBy: SolutionArticleOrderBy, $userInput: String) {
+               questionSolutionArticles(questionSlug: $questionSlug, skip: $skip, first: $first, orderBy: $orderBy, userInput: $userInput) {
+                totalNum
+                 edges {
+                  node {
+                   ...article
+                   __typename
+                   }
+                 __typename
+                }
+                __typename
+                    }
+                }
+                         
+                fragment article on SolutionArticleNode {
+                    title
+                    slug
+                    reactedType
+                    status
+                    identifier
+                    canEdit
+                    reactions {
+                       count
+                       reactionType
+                       __typename
+                    }
+                    tags {
+                        name
+                        nameTranslated
+                        slug
+                        __typename
+                    }
+                    createdAt
+                        thumbnail
+                        author {
+                            username
+                            profile {
+                                userAvatar
+                                userSlug
+                                realName
+                                __typename
+                            }
+                            __typename
+                        }
+                        summary
+                        topic {
+                            id
+                            commentCount
+                            viewCount
+                            __typename
+                        }
+                        byLeetcode
+                        isMyFavorite
+                        isMostPopular
+                        isEditorsPick
+                        upvoteCount
+                        upvoted
+                        hitCount
+                        __typename
+                    }
+                '''
+              }
+
+    json_data = json.dumps(params).encode('utf8')
+
+    headers = {'User-Agent': user_agent, 'Connection': 'keep-alive', 'Content-Type': 'application/json',
+               'Referer': 'https://leetcode-cn.com/problems/' + slug}
+    resp = session.post(url, data=json_data, headers=headers, timeout=10)
+    content = resp.json()
+
+    node = content['data']['questionSolutionArticles']['edges'][0]['node']
+
+    return node
+
+
+def download_image(problem_slug, detial):
+    image_dict = {}
+    pattern = 'https://pic.leetcode-cn.com[\w|.|\-|\/|%|&|~|#|_|=|*]+'
+    regex = re.compile(pattern)
+    image_list = regex.findall(detial)
+    for i in range(len(image_list)):
+        r = requests.get(image_list[i])
+        suffix=(image_list[i].split(".")[-1])
+        image_suffix_list=['png','jpg','jpeg','gif']
+        if not image_suffix_list.__contains__(suffix.lower()):
+            suffix='png'
+        image_name = "/images/" + problem_slug + "-" + str(i) + "." + suffix.lower()
+        print("下载图片到："+image_name)
+        with open(OUTPUT_DIR + image_name, 'wb') as f:
+            f.write(r.content)
+        image_dict[image_list[i]] = ".." + image_name
+    return image_dict
+
+
+def get_solution_detail_by_node(problem_slug, node):
+    solution_slug = node['slug']
+    url = "https://leetcode-cn.com/graphql"
+    params = {'operationName': "solutionDetailArticle",
+              'variables': {'slug': solution_slug},
+              'query': '''query solutionDetailArticle($slug: String!) {
+               solutionArticle(slug: $slug) {
+                ...article
+                 content
+                  question {
+                  questionTitleSlug
+                  __typename
+               }
+               __typename
+               }
+               }
+                       
+               fragment article on SolutionArticleNode {
+                   title
+                   slug
+                   reactedType
+                   status
+                   identifier
+                   canEdit
+                   reactions {
+                       count
+                       reactionType
+                       __typename
+                   }
+                   tags {
+                       name
+                       nameTranslated
+                       slug
+                       __typename
+                   }
+                   createdAt
+                   thumbnail
+                   author {
+                       username
+                       profile {
+                           userAvatar
+                           userSlug
+                           realName
+                           __typename
+                       }
+                        __typename
+                   }
+                       summary
+                       topic {
+                           id
+                           commentCount
+                           viewCount
+                           __typename
+                   }
+                   byLeetcode
+                   isMyFavorite
+                   isMostPopular
+                   isEditorsPick
+                   upvoteCount
+                   upvoted
+                   hitCount
+                   __typename
+                   }
+               '''
+              }
+
+    json_data = json.dumps(params).encode('utf8')
+
+    headers = {'User-Agent': user_agent, 'Connection': 'keep-alive', 'Content-Type': 'application/json',
+               'Referer': 'https://leetcode-cn.com/problems/' + problem_slug}
+    resp = session.post(url, data=json_data, headers=headers, timeout=10)
+    content = resp.json()
+
+    solution_detail = content['data']['solutionArticle']
+
+    return solution_detail
+
+
 def get_submission_by_id(client, submission_id):
     url = "https://leetcode-cn.com/submissions/detail/" + str(submission_id)
     headers = {'User-Agent': user_agent, 'Connection': 'keep-alive'}
@@ -310,9 +498,18 @@ def get_submission_by_id(client, submission_id):
     problem_slug = dom.xpath('//*[@id="submission-app"]/div/div[1]/h4/a/@href')[0].split('/')[2]
     code_start_index = html.index("submissionCode")
     code_end_index = html.index("editCodeUrl")
-    code = html[code_start_index + 17:code_end_index - 5].encode('utf-8').decode("unicode-escape")
-    lang_start_index=html.index("getLangDisplay")
-    lang=html[lang_start_index+17:code_start_index-5]
+    code = html[code_start_index + 17:code_end_index - 5]
+    s = code.encode()  # 此处必须进行字符串转义
+    temp = s.decode('utf-8')
+    pattern = "([\u4e00-\u9fa5]+|[\u3002|\uff1f|\uff01|\uff0c|\u3001|\uff1b|\uff1a|\u201c|\u201d|\u2018|\u2019|\uff08|\uff09|\u300a|\u300b|\u3008|\u3009|\u3010|\u3011|\u300e|\u300f|\u300c|\u300d|\ufe43|\ufe44|\u3014|\u3015|\u2026|\u2014|\uff5e|\ufe4f|\uffe5])"  # 中文正则表达式
+    regex = re.compile(pattern)  # 生成正则对象
+    results = regex.findall(temp)  # 匹配
+    for result in results:  # 迭代遍历出内容
+        code = code.replace(result, str(result.encode('unicode-escape'))[2:-1])
+    code = code.replace("\\\\", "\\")
+    code = code.encode('utf-8').decode("unicode-escape")
+    lang_start_index = html.index("getLangDisplay")
+    lang = html[lang_start_index + 17:code_start_index - 5]
     problem = {'problem_slug': problem_slug, 'code': code, 'lang': lang}
     return problem
 
@@ -326,11 +523,15 @@ def get_all_problems(client):
     question_list = json.loads(resp.content.decode('utf-8'))
     local_problems = {}
     local_problems_code_template = {}
+    exclude_problems = []
     with open("problems.json", "r") as f:  # 读取记录
         local_problems = json.loads(f.read())
 
     with open("code_template.json", "r") as f:  # 读取记录
         local_problems_code_template = json.loads(f.read())
+
+    with open("exclude_problems.json", "r") as f:  # 读取记录
+        exclude_problems = json.loads(f.read())
     problem_anchor = ""
     try:
         for question in question_list['stat_status_pairs']:
@@ -340,7 +541,7 @@ def get_all_problems(client):
             # 题目状态
             question_status = question['status']
 
-            # if question_status == 'ac' and frontend_question_id == "771":
+            # if question_status == 'ac' and frontend_question_id == "283":
             if question_status == 'ac':
                 # 题目编号
                 question_id = question['stat']['question_id']
@@ -362,6 +563,9 @@ def get_all_problems(client):
                         for i in range(len(this_problem_code_template)):
                             code_str += this_problem_code_template[i]
                     for i in range(len(submission_list)):
+                        if int(frontend_question_id) in exclude_problems:
+                            print(frontend_question_id + "-" + question_slug + " 跳过该题！")
+                            break
                         if (not local_problems.__contains__(question_slug) and submission_list[i][
                             'statusDisplay'] == 'Accepted') or (
                                 local_problems.__contains__(question_slug) and not local_problems[
@@ -371,12 +575,14 @@ def get_all_problems(client):
                             temp = get_submission_by_id(client, submission_list[i]['id'])
                             this_submission_code_str = '  <template slot="code-' + temp['lang'].title() + '-' + str(
                                 i + 1) + '">\n'
-                            filepath = OUTPUT_DIR + '/codes/' + question_slug + '-' + str(i + 1) + '.' + temp['lang']
-                            print(question_slug + '-' + str(i + 1) + '.' + temp['lang'])
+                            filepath = OUTPUT_DIR + '/codes/' + question_slug + '-' + str(i + 1) + '.' + file_suffix[
+                                temp['lang']]
+                            print("写入代码："+question_slug + '-' + str(i + 1) + '.' + file_suffix[temp['lang']])
                             with open(filepath, "w") as f:
                                 f.write(temp['code'])
                             this_submission_code_str += '    <<< @/docs/views/codes/' + question_slug + '-' + str(
-                                i + 1) + '.' + temp['lang'] + '?' + temp['lang'].title() + '\n'
+                                i + 1) + '.' + file_suffix[temp['lang']] + '?' + file_suffix[
+                                                            temp['lang']].title() + '\n'
                             this_submission_code_str += '  </template>\n'
                             if not local_problems.__contains__(question_slug):
                                 local_problems[question_slug] = submission_list[i]['timestamp']
@@ -402,13 +608,15 @@ def get_all_problems(client):
                         write_to_file(client, submission_list[0])
     finally:
         try:
-            local_problems.pop(problem_anchor)
-            local_problems_code_template.pop(problem_anchor)
+            if problem_anchor != 'two-sum':
+                local_problems.pop(problem_anchor)
+                local_problems_code_template.pop(problem_anchor)
         finally:
             with open("problems.json", "w") as f:
                 f.write(json.dumps(local_problems))
             with open("code_template.json", "w") as f:
                 f.write(json.dumps(local_problems_code_template))
+
 
 def mkdir(path):
     folder = os.path.exists(path)
@@ -422,6 +630,7 @@ def mk_leetcode_dirs():
     mkdir("../docs/views/简单")
     mkdir("../docs/views/中等")
     mkdir("../docs/views/困难")
+    mkdir("../docs/views/images")
 
 
 def main():
@@ -432,6 +641,9 @@ def main():
     client = login(email, password)
     mk_leetcode_dirs()
     get_all_problems(client)
+    # node=get_solutions_by_slug('remove-all-adjacent-duplicates-in-string')
+    # get_solution_detail_by_node('remove-all-adjacent-duplicates-in-string',node)
+
 
 if __name__ == '__main__':
     main()
