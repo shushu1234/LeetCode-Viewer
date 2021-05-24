@@ -2,7 +2,7 @@
 
 ## 简介：
 
-LeetCode-Viewer是一个利用Python爬取LeetCode-CN的做题信息，并通过Vuepress构建网页展示出来的一个项目，具体可以参考Demo：[LeetCode-Viewer](http://liuyao.gq)
+LeetCode-Viewer是一个利用Python爬取LeetCode-CN的做题信息，并通过Vuepress构建网页展示出来的一个项目，具体可以参考Demo：[LeetCode-Viewer](http://www.liuyao.gq/)
 
 下面给先看一下吧：
 
